@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biology 30: Cell Division Quiz</title>
+    <style>
+        /* Ensures all text is black per your requirement */
+        body {
+            font-family: Arial, sans-serif;
+            color: black; 
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #quiz-app {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            color: black;
+        }
+
+        #question-counter {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #question-text {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        #hint-text {
+            font-style: italic;
+            margin-bottom: 20px;
+            color: black; 
+        }
+
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background-color: #e9ecef;
+            border: 2px solid #ced4da;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            text-align: left;
+            color: black;
+            transition: background-color 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #d3d9df;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #feedback-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            font-weight: bold;
+            color: black;
+        }
+
+        .feedback-correct {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback-incorrect {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+
+        #next-btn, #restart-btn {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white; /* Button text is white for contrast against blue, but standard text remains black */
+            border: none;
+            border-radius: 5px;
+            float: right;
+        }
+
+        #next-btn:hover, #restart-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #results-container {
+            display: none;
+            text-align: center;
+        }
+        
+        /* Clearing float for the next button */
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+    </style>
+</head>
+<body>
+
+<div id="quiz-app">
+    <h1>Biology 30: Mitosis & Meiosis Review</h1>
+    
+    <div id="quiz-container">
+        <div id="question-counter"></div>
+        <div id="question-text"></div>
+        <div id="hint-text"></div>
+        <div id="options-container"></div>
+        
+        <div id="feedback-container"></div>
+        <div class="clearfix">
+            <button id="next-btn" onclick="nextQuestion()">Next Question</button>
+        </div>
+    </div>
+
+    <div id="results-container">
+        <h2>Quiz Complete!</h2>
+        <p id="score-text" style="font-size: 1.5em; font-weight: bold;"></p>
+        <p id="score-message"></p>
+        <button id="restart-btn" style="display: inline-block; float: none;" onclick="location.reload()">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            q: "A skin cell in a Rainbow Trout is undergoing division to replace damaged tissue. Which process is occurring?",
+            hint: "Hint: Think about whether this division is for growth/repair or for producing gametes.",
+            options: [
+                { text: "Mitosis", correct: true, rationale: "Somatic cells, such as skin cells, divide via mitosis to ensure the daughter cells are genetically identical for tissue repair." },
+                { text: "Meiosis", correct: false, rationale: "Meiosis is reserved for producing haploid germ cells, not for repairing somatic tissues." },
+                { text: "Both", correct: false, rationale: "Only one specific process is used for somatic tissue regeneration." },
+                { text: "Neither", correct: false, rationale: "Cell division is definitely occurring here to facilitate healing." }
+            ]
+        },
+        {
+            q: "During a laboratory observation, a student notices the formation of a tetrad (synapsis) where homologous chromosomes pair up. This describes:",
+            hint: "Hint: Synapsis allows for crossing over, which increases genetic diversity.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Homologous chromosomes do not pair up in mitosis; they behave independently." },
+                { text: "Meiosis", correct: true, rationale: "Synapsis and the formation of tetrads occur during Prophase I to allow for crossing over." },
+                { text: "Both", correct: false, rationale: "Only one of these processes involves the pairing of homologous chromosomes." },
+                { text: "Neither", correct: false, rationale: "This is a fundamental biological event during the production of gametes." }
+            ]
+        },
+        {
+            q: "A cell undergoes DNA replication during Interphase before the division begins. This is a characteristic of:",
+            hint: "Hint: All cells must copy their genetic blueprint before they can split into two or more cells.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "While true for mitosis, it is also true for the other process." },
+                { text: "Meiosis", correct: false, rationale: "While true for meiosis, it is also true for the other process." },
+                { text: "Both", correct: true, rationale: "Both processes require a round of DNA replication during the S-phase of Interphase to prepare for division." },
+                { text: "Neither", correct: false, rationale: "DNA replication is essential for any standard eukaryotic cell division." }
+            ]
+        },
+        {
+            q: "A cell in the testes of a mammal is dividing to produce spermatids. This describes:",
+            hint: "Hint: Consider the end goal: creating sperm cells with half the chromosome count.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Mitosis results in diploid clones, which is not the goal of sperm production." },
+                { text: "Meiosis", correct: true, rationale: "Spermatogenesis uses meiosis to reduce the chromosome number from diploid to haploid." },
+                { text: "Both", correct: false, rationale: "Only the reductive division process creates spermatids." },
+                { text: "Neither", correct: false, rationale: "Spermatids are produced through a very specific type of cell division." }
+            ]
+        },
+        {
+            q: "Cytokinesis occurs at the end of the telophase stage to split the cytoplasm. This occurs in:",
+            hint: "Hint: This is the final physical 'pinching' or splitting of the cell body.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Cytokinesis is a standard feature here, but it also occurs in the other process." },
+                { text: "Meiosis", correct: false, rationale: "Cytokinesis occurs after both Meiosis I and II, but also in the other process." },
+                { text: "Both", correct: true, rationale: "Both processes involve cytokinesis to physically divide the parent cell's cytoplasm into daughter cells." },
+                { text: "Neither", correct: false, rationale: "Without cytokinesis, you would have a multinucleated cell." }
+            ]
+        },
+        {
+            q: "A parent cell with 46 chromosomes divides to produce two daughter cells, each with 46 chromosomes. This is:",
+            hint: "Hint: The chromosome number remains constant (diploid to diploid).",
+            options: [
+                { text: "Mitosis", correct: true, rationale: "Mitosis maintains the chromosome number, producing genetically identical clones." },
+                { text: "Meiosis", correct: false, rationale: "Meiosis results in daughter cells with 23 chromosomes (haploid)." },
+                { text: "Both", correct: false, rationale: "Only one process maintains the exact chromosome count." },
+                { text: "Neither", correct: false, rationale: "This is the definition of equational division." }
+            ]
+        },
+        {
+            q: "The process results in four daughter cells that are genetically distinct from one another. This is:",
+            hint: "Hint: Think about where genetic variation (crossing over and independent assortment) occurs.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Mitosis produces only two daughter cells which are clones." },
+                { text: "Meiosis", correct: true, rationale: "Two rounds of division and genetic recombination result in four unique haploid cells." },
+                { text: "Both", correct: false, rationale: "One produces clones, while the other produces variation." },
+                { text: "Neither", correct: false, rationale: "This is a hallmark of sexual reproduction preparation." }
+            ]
+        },
+        {
+            q: "Sister chromatids are pulled apart by spindle fibers toward opposite poles. This occurs in:",
+            hint: "Hint: This happens during 'Anaphase' in one process and 'Anaphase II' in the other.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "This is true, but it also describes a phase in the other process." },
+                { text: "Meiosis", correct: false, rationale: "This is true for the second stage of meiosis, but it also describes mitosis." },
+                { text: "Both", correct: true, rationale: "Separating sister chromatids is common to mitosis and Anaphase II of meiosis." },
+                { text: "Neither", correct: false, rationale: "This is a fundamental mechanism for ensuring each new cell gets the correct DNA." }
+            ]
+        },
+        {
+            q: "A liver cell in a developing fetus is dividing rapidly to increase the size of the organ. This is:",
+            hint: "Hint: Fetal growth and organ development rely on creating more identical functional cells.",
+            options: [
+                { text: "Mitosis", correct: true, rationale: "Growth of organs and organisms is achieved through the production of identical somatic cells via mitosis." },
+                { text: "Meiosis", correct: false, rationale: "This would produce gametes in the liver, which does not happen." },
+                { text: "Both", correct: false, rationale: "Only the somatic division process is involved in organ growth." },
+                { text: "Neither", correct: false, rationale: "Rapid cell division is the primary mechanism for fetal development." }
+            ]
+        },
+        {
+            q: "Homologous pairs line up randomly at the metaphase plate (Independent Assortment). This occurs in:",
+            hint: "Hint: This process ensures that each gamete has a unique mix of maternal and paternal chromosomes.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "In mitosis, chromosomes line up individually, not in homologous pairs." },
+                { text: "Meiosis", correct: true, rationale: "Independent assortment of homologous pairs occurs exclusively during Metaphase I of meiosis." },
+                { text: "Both", correct: false, rationale: "Only the reductive division involves the pairing and assortment of homologs." },
+                { text: "Neither", correct: false, rationale: "This is a critical step for generating genetic diversity in offspring." }
+            ]
+        },
+        {
+            q: "A cell undergoes two rounds of nuclear division but only one round of DNA replication. This is:",
+            hint: "Hint: The result of this 'double division' is a reduction in the total amount of DNA per cell.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Mitosis involves only a single round of nuclear division." },
+                { text: "Meiosis", correct: true, rationale: "The sequence of Meiosis I and II constitutes two divisions following a single S-phase." },
+                { text: "Both", correct: false, rationale: "Only one of these follows a 'one-replication, two-divisions' pattern." },
+                { text: "Neither", correct: false, rationale: "This is the standard mechanism for producing haploid cells." }
+            ]
+        },
+        {
+            q: "Spindle fibers attach to the centromeres of chromosomes to move them. This occurs in:",
+            hint: "Hint: This mechanical action is necessary to organize chromosomes before they are separated.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "This is true, but it also occurs in the other process." },
+                { text: "Meiosis", correct: false, rationale: "This is true, but it also occurs in the other process." },
+                { text: "Both", correct: true, rationale: "Both processes utilize a spindle apparatus to move genetic material by their centromeres." },
+                { text: "Neither", correct: false, rationale: "Spindle fibers are essential for the movement of chromosomes." }
+            ]
+        },
+        {
+            q: "The chromosome number is reduced from diploid to haploid. This describes:",
+            hint: "Hint: This is often called 'reductive division'.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Mitosis is an equational division where the number stays the same." },
+                { text: "Meiosis", correct: true, rationale: "Meiosis specifically halves the chromosome number to prepare for fertilization." },
+                { text: "Both", correct: false, rationale: "Only one process results in a change in ploidy." },
+                { text: "Neither", correct: false, rationale: "This is the central purpose of gamete formation." }
+            ]
+        },
+        {
+            q: "A cell in the tip of a plant root (meristem) is dividing to elongate the root. This is:",
+            hint: "Hint: Plant growth in roots and shoots is a vegetative (non-sexual) process.",
+            options: [
+                { text: "Mitosis", correct: true, rationale: "Meristematic tissue divides via mitosis to produce more identical cells for plant growth." },
+                { text: "Meiosis", correct: false, rationale: "This would happen in the flowers (anthers/ovules) of the plant, not the roots." },
+                { text: "Both", correct: false, rationale: "Root elongation is strictly a somatic growth process." },
+                { text: "Neither", correct: false, rationale: "Plant roots grow through active cell division." }
+            ]
+        },
+        {
+            q: "Individual chromosomes (not pairs) align at the equator during Metaphase. This occurs in:",
+            hint: "Hint: In one process this happens once; in the other, it happens during the second stage.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "This is true, but it also happens in one stage of the other process." },
+                { text: "Meiosis", correct: false, rationale: "This happens during stage II, but it also happens in the other process." },
+                { text: "Both", correct: true, rationale: "Chromosomes align single-file in mitosis and in Metaphase II of meiosis." },
+                { text: "Neither", correct: false, rationale: "Alignment at the metaphase plate is a standard step." }
+            ]
+        },
+        {
+            q: "Crossing over occurs between non-sister chromatids. This is a feature of:",
+            hint: "Hint: This results in 'recombinant' chromosomes that have a mix of DNA from both parents.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Genetic recombination would defeat the purpose of creating identical clones." },
+                { text: "Meiosis", correct: true, rationale: "Crossing over occurs during Prophase I to increase genetic diversity." },
+                { text: "Both", correct: false, rationale: "Only the sexual division process involves swapping genetic material." },
+                { text: "Neither", correct: false, rationale: "Crossing over is a real and vital biological process." }
+            ]
+        },
+        {
+            q: "The nuclear envelope breaks down and the nucleolus disappears during Prophase. This occurs in:",
+            hint: "Hint: The DNA must be accessible to the spindle fibers for the division to proceed.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "This is a standard early step, but it also occurs in the other process." },
+                { text: "Meiosis", correct: false, rationale: "This happens in both Meiosis I and II, but it also occurs in the other process." },
+                { text: "Both", correct: true, rationale: "Both processes require the temporary removal of the nuclear membrane to organize chromosomes." },
+                { text: "Neither", correct: false, rationale: "The 'disappearance' of the nucleus is a key indicator that division has begun." }
+            ]
+        },
+        {
+            q: "A human somatic cell is in Prophase of mitosis. How many chromosomes and sister chromatids are present in this single cell?",
+            hint: "Hint: DNA replication has already occurred, but the sister chromatids are still attached at one centromere.",
+            options: [
+                { text: "46 chromosomes, 92 chromatids", correct: true, rationale: "The human diploid number is 46. Because the DNA replicated, each chromosome consists of two sister chromatids." },
+                { text: "46 chromosomes, 46 chromatids", correct: false, rationale: "This means the DNA has not replicated yet, incorrect for Prophase." },
+                { text: "23 chromosomes, 46 chromatids", correct: false, rationale: "This describes a human cell undergoing Prophase II of meiosis." },
+                { text: "92 chromosomes, 92 chromatids", correct: false, rationale: "The chromosome count does not double during replication; only the DNA doubles." }
+            ]
+        },
+        {
+            q: "At the end of Telophase I and cytokinesis in human meiosis, what is the chromosome and chromatid count for EACH resulting daughter cell?",
+            hint: "Hint: Meiosis I is a reductional division, but the sister chromatids have not yet separated.",
+            options: [
+                { text: "46 chromosomes, 92 chromatids", correct: false, rationale: "This is the count for the parent cell before the first division is complete." },
+                { text: "23 chromosomes, 23 chromatids", correct: false, rationale: "This is the final count for gametes at the end of Meiosis II." },
+                { text: "46 chromosomes, 46 chromatids", correct: false, rationale: "This would be the count for a normal somatic cell in G1 phase." },
+                { text: "23 chromosomes, 46 chromatids", correct: true, rationale: "Homologous pairs separated (reducing count to 23), but each chromosome still has two sister chromatids." }
+            ]
+        },
+        {
+            q: "During Anaphase of mitosis in a human cell, the sister chromatids are pulled apart. Just after they separate, how many centromeres are present in the entire cell?",
+            hint: "Hint: Once sister chromatids split, they are each considered individual chromosomes with their own centromere.",
+            options: [
+                { text: "46", correct: false, rationale: "This was the number of centromeres before the sister chromatids separated." },
+                { text: "92", correct: true, rationale: "When 46 duplicated chromosomes split, you temporarily have 92 independent chromosomes (and 92 centromeres) in the cell." },
+                { text: "23", correct: false, rationale: "This represents the haploid number, which is not relevant to mitosis." },
+                { text: "184", correct: false, rationale: "This number is far too high." }
+            ]
+        },
+        {
+            q: "A fertilized human egg (zygote) begins to divide to form a blastocyst. The cell division responsible for this is:",
+            hint: "Hint: The zygote is dividing to grow into a multicellular embryo.",
+            options: [
+                { text: "Mitosis", correct: true, rationale: "Embryonic cleavage is a series of rapid mitotic divisions to grow the organism." },
+                { text: "Meiosis", correct: false, rationale: "Meiosis creates the gametes that formed the zygote; it doesn't grow the zygote." },
+                { text: "Both", correct: false, rationale: "Only standard equational division is used here." },
+                { text: "Neither", correct: false, rationale: "The zygote must divide to form a human." }
+            ]
+        },
+        {
+            q: "Homologous chromosomes are separated from each other and pulled to opposite poles. This occurs during:",
+            hint: "Hint: This is the exact moment the cell goes from being diploid to haploid.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Mitosis separates sister chromatids, not homologous pairs." },
+                { text: "Meiosis", correct: true, rationale: "Homologous chromosomes are specifically separated during Anaphase I of meiosis." },
+                { text: "Both", correct: false, rationale: "Only the reductional division separates homologous pairs." },
+                { text: "Neither", correct: false, rationale: "This is the primary mechanism of Meiosis I." }
+            ]
+        },
+        {
+            q: "Chiasmata form visible X-shaped regions under a microscope. This is a characteristic of:",
+            hint: "Hint: Chiasmata are the physical manifestation of crossing over.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Crossing over does not naturally occur in mitosis." },
+                { text: "Meiosis", correct: true, rationale: "Chiasmata are the physical links where crossing over occurs between non-sister chromatids in Prophase I." },
+                { text: "Both", correct: false, rationale: "Only meiosis features programmed crossing over." },
+                { text: "Neither", correct: false, rationale: "Chiasmata are highly observable under advanced microscopy." }
+            ]
+        },
+        {
+            q: "A period of rest called 'interkinesis' occurs between cell divisions, during which no DNA replication takes place. This is part of:",
+            hint: "Hint: This is a brief pause between two major division stages.",
+            options: [
+                { text: "Mitosis", correct: false, rationale: "Mitosis only has one division, so there is no pause between divisions." },
+                { text: "Meiosis", correct: true, rationale: "Interkinesis is the brief resting phase between Meiosis I and Meiosis II." },
+                { text: "Both", correct: false, rationale: "Only one process has multiple consecutive divisions." },
+                { text: "Neither", correct: false, rationale: "This is a recognized phase in the generation of gametes." }
+            ]
+        },
+        {
+            q: "A human cell in Metaphase II of meiosis contains how many chromatids in total?",
+            hint: "Hint: Consider how many chromosomes are present after Meiosis I, and whether they are still duplicated.",
+            options: [
+                { text: "23", correct: false, rationale: "This is the number of chromosomes, but each is still duplicated." },
+                { text: "46", correct: true, rationale: "There are 23 chromosomes lined up, and because they haven't separated yet, each has 2 chromatids (23 x 2 = 46)." },
+                { text: "92", correct: false, rationale: "This would be the chromatid count in Metaphase of Mitosis or Metaphase I of Meiosis." },
+                { text: "0", correct: false, rationale: "Chromatids are definitely present at this stage." }
+            ]
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const questionCounterEl = document.getElementById('question-counter');
+    const questionTextEl = document.getElementById('question-text');
+    const hintTextEl = document.getElementById('hint-text');
+    const optionsContainer = document.getElementById('options-container');
+    const feedbackContainer = document.getElementById('feedback-container');
+    const nextBtn = document.getElementById('next-btn');
+    const quizContainer = document.getElementById('quiz-container');
+    const resultsContainer = document.getElementById('results-container');
+    const scoreText = document.getElementById('score-text');
+    const scoreMessage = document.getElementById('score-message');
+
+    function loadQuestion() {
+        // Reset state for the new question
+        feedbackContainer.style.display = 'none';
+        nextBtn.style.display = 'none';
+        optionsContainer.innerHTML = '';
+        feedbackContainer.className = '';
+
+        const currentData = quizData[currentQuestionIndex];
+        
+        questionCounterEl.innerText = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+        questionTextEl.innerText = currentData.q;
+        hintTextEl.innerText = currentData.hint;
+
+        // Generate buttons for options
+        currentData.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.innerText = option.text;
+            button.classList.add('option-btn');
+            button.onclick = () => selectAnswer(option, button);
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function selectAnswer(selectedOption, selectedButton) {
+        // Disable all buttons once an answer is chosen
+        const buttons = optionsContainer.querySelectorAll('.option-btn');
+        buttons.forEach(btn => btn.disabled = true);
+
+        // Check if correct
+        if (selectedOption.correct) {
+            score++;
+            selectedButton.style.backgroundColor = '#d4edda';
+            selectedButton.style.borderColor = '#c3e6cb';
+            feedbackContainer.innerHTML = `<strong>Correct!</strong> <br><br> ${selectedOption.rationale}`;
+            feedbackContainer.className = 'feedback-correct';
+        } else {
+            selectedButton.style.backgroundColor = '#f8d7da';
+            selectedButton.style.borderColor = '#f5c6cb';
+            
+            // Highlight the actual correct answer
+            const correctIndex = quizData[currentQuestionIndex].options.findIndex(opt => opt.correct);
+            buttons[correctIndex].style.backgroundColor = '#d4edda';
+
+            feedbackContainer.innerHTML = `<strong>Incorrect.</strong> <br><br> ${selectedOption.rationale}`;
+            feedbackContainer.className = 'feedback-incorrect';
+        }
+
+        // Show feedback and next button
+        feedbackContainer.style.display = 'block';
+        nextBtn.style.display = 'block';
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        quizContainer.style.display = 'none';
+        resultsContainer.style.display = 'block';
+        
+        const percentage = Math.round((score / quizData.length) * 100);
+        scoreText.innerText = `You scored ${score} out of ${quizData.length} (${percentage}%)`;
+
+        if (percentage >= 80) {
+            scoreMessage.innerText = "Excellent work! You have a solid understanding of cell division.";
+        } else if (percentage >= 60) {
+            scoreMessage.innerText = "Good job! Review the questions you missed to perfect your knowledge.";
+        } else {
+            scoreMessage.innerText = "Keep practicing! Reviewing the differences between chromosome and chromatid counts will help.";
+        }
+    }
+
+    // Initialize the quiz
+    loadQuestion();
+</script>
+
+</body>
+</html>
